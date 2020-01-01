@@ -12,11 +12,22 @@ class EnemyButton():
     def __init__(self, p):
         self.button = QPushButton(p.name) 
         self.enemy = p
-        menu = QMenu()
-        menu.addAction(p.get_hp_bar(), self.show_hp)
-        menu.addAction(p.get_mp_bar(), self.show_mp)
+        self.hp_label = QLabel(p.get_hp_bar())
+        self.mp_label = QLabel(p.get_mp_bar())
 
-        self.button.setMenu(menu)
+        self.vbox = QVBoxLayout()
+        self.vbox.addWidget(self.button)       
+        self.vbox.addWidget(self.hp_label)
+        self.vbox.addWidget(self.mp_label)
+
+
+
+        #menu = QMenu()
+        #menu.addAction(p.get_hp_bar(), self.show_hp)
+        #menu.addAction(p.get_mp_bar(), self.show_mp)
+        
+        #self.button.setMenu(menu)
+
 
     def show_hp(self):
         print("HP")
@@ -24,6 +35,12 @@ class EnemyButton():
     def show_mp(self):
         print("MP")
 
+    def take_damage_if_ready(self):
+        self.enemy.take_damage(500)
+        self.hp_label.setText(self.enemy.get_hp_bar())
+        
+        #self.button.setMenu(menu)
+    
 
 class Application(QWidget):
     def __init__(self, enemies, players):
@@ -45,7 +62,9 @@ class Application(QWidget):
         enemy_buttons = []
         for button in enemies:
             b_object = EnemyButton(button)
-            grid.addWidget(b_object.button, row, col, 1, 1)
+            b_object.button.clicked.connect(lambda state, x=b_object: x.take_damage_if_ready())        
+
+            grid.addLayout(b_object.vbox, row, col, 1, 1)
 
             enemy_buttons.append(b_object)
             row += 1
@@ -58,10 +77,6 @@ class Application(QWidget):
             row += 1
 
 
-        if self.attack_ready:
-            for b_object in enemy_buttons:
-                b_object.button.clicked.connect(b_object.enemy.take_damage(300))
-                print("DAMAGE TAKEN")
 
         self.attack_button = QPushButton("Attackt")
         row += 1
@@ -69,8 +84,11 @@ class Application(QWidget):
 
         self.attack_button.clicked.connect(self.is_attack_ready)
 
+
         self.setLayout(grid)
         self.show()
+
+    
 
     def is_attack_ready(self):
         if self.attack_ready:
@@ -79,6 +97,7 @@ class Application(QWidget):
         else:
             self.attack_button.setText("Attack ready!")
             self.attack_ready = True
+        
 
 if __name__ == "__main__":
 
