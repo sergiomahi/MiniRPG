@@ -35,10 +35,12 @@ class EnemyButton():
     def show_mp(self):
         print("MP")
 
-    def take_damage_if_ready(self):
-        self.enemy.take_damage(500)
-        self.hp_label.setText(self.enemy.get_hp_bar())
-        
+    def take_damage_if_ready(self, attack_ready, damage):
+        if attack_ready:
+            self.enemy.take_damage(damage)
+            self.hp_label.setText(self.enemy.get_hp_bar())
+            return True
+        return False
         #self.button.setMenu(menu)
     
 
@@ -46,9 +48,12 @@ class Application(QWidget):
     def __init__(self, enemies, players):
         super().__init__()
         self.current_player = players[0]
+        self.num_turns = 1
         self.attack_ready = False
 
         self.setWindowTitle("RPG")
+        self.enemies = enemies
+        self.players = players
         self.createApp(enemies, players)
 
     def createApp(self, enemies, players):
@@ -62,7 +67,7 @@ class Application(QWidget):
         enemy_buttons = []
         for button in enemies:
             b_object = EnemyButton(button)
-            b_object.button.clicked.connect(lambda state, x=b_object: x.take_damage_if_ready())        
+            b_object.button.clicked.connect(lambda state, x=b_object: self.attack(x))        
 
             grid.addLayout(b_object.vbox, row, col, 1, 1)
 
@@ -98,6 +103,25 @@ class Application(QWidget):
             self.attack_button.setText("Attack ready!")
             self.attack_ready = True
         
+    def attack(self, button):
+        if button.take_damage_if_ready(self.attack_ready, self.current_player.generate_damage()):
+            print(self.current_player.name)
+
+
+            num_players = len(self.players)
+            num_enemies = len(self.enemies)
+            if self.num_turns < num_players:
+                self.current_player = self.players[self.num_turns]
+                self.num_turns += 1
+            elif self.num_turns < num_players + num_enemies:
+                self.current_player = self.enemies[self.num_turns - num_enemies]
+                self.num_turns += 1
+            else:
+                self.current_player = self.players[0]
+                self.num_turns = 1
+            
+            self.is_attack_ready()
+
 
 if __name__ == "__main__":
 
