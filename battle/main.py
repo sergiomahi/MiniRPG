@@ -21,20 +21,6 @@ class EnemyButton():
         self.vbox.addWidget(self.mp_label)
 
 
-
-        #menu = QMenu()
-        #menu.addAction(p.get_hp_bar(), self.show_hp)
-        #menu.addAction(p.get_mp_bar(), self.show_mp)
-        
-        #self.button.setMenu(menu)
-
-
-    def show_hp(self):
-        print("HP")
-    
-    def show_mp(self):
-        print("MP")
-
     def take_damage_if_ready(self, attack_ready, damage):
         if attack_ready:
             self.enemy.take_damage(damage)
@@ -43,6 +29,27 @@ class EnemyButton():
         return False
         #self.button.setMenu(menu)
     
+
+class PlayerButton():
+    def __init__(self, p):
+        self.button = QPushButton(p.name) 
+        self.player = p
+        self.hp_label = QLabel(p.get_hp_bar())
+        self.mp_label = QLabel(p.get_mp_bar())
+
+        self.vbox = QVBoxLayout()
+        self.vbox.addWidget(self.button)       
+        self.vbox.addWidget(self.hp_label)
+        self.vbox.addWidget(self.mp_label)
+
+
+    def take_damage_if_ready(self, attack_ready, damage):
+        if attack_ready:
+            self.player.take_damage(damage)
+            self.hp_label.setText(self.player.get_hp_bar())
+            return True
+        return False
+
 
 class Application(QWidget):
     def __init__(self, enemies, players):
@@ -58,8 +65,8 @@ class Application(QWidget):
 
     def createApp(self, enemies, players):
         grid = QGridLayout()
-        turn_of = QLabel("Turn of {}".format(self.current_player.name))
-        grid.addWidget(turn_of, 0, 0, 1, 3)
+        self.turn_of = QLabel("Turn of {}".format(self.current_player.name))
+        grid.addWidget(self.turn_of, 0, 0, 1, 3)
         
         
         row = 2
@@ -77,8 +84,10 @@ class Application(QWidget):
         row = 2
         col = 3
         for button in players:
-            b_object = EnemyButton(button)
-            grid.addWidget(b_object.button, row, col, 1, 1)
+            b_object = PlayerButton(button)
+            b_object.button.clicked.connect(lambda state, x=b_object: self.attack(x))        
+
+            grid.addLayout(b_object.vbox, row, col, 1, 1)
             row += 1
 
 
@@ -122,6 +131,10 @@ class Application(QWidget):
             
             self.is_attack_ready()
 
+            self.updateTurnLabel()
+
+    def updateTurnLabel(self):
+        self.turn_of.setText("Turn of {}".format(self.current_player.name))
 
 if __name__ == "__main__":
 
