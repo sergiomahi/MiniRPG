@@ -119,10 +119,10 @@ class Application(QWidget):
         if button.take_damage_if_ready(self.attack_ready, self.current_player.generate_damage()):
             print(self.current_player.name)
 
-            num_players = len(self.players)
+            num_players_alive = len(self.players_alive(self.players))
             
 
-            if self.num_turns < num_players:
+            if self.num_turns < num_players_alive:
                 self.current_player = self.players[self.num_turns] # Take next player
                 self.num_turns += 1
             else:
@@ -166,6 +166,9 @@ class Application(QWidget):
         players_alive = self.players_alive(next_players, actual_position)
         print(players_alive)
 
+        if not players_alive:
+            return self.players_alive(self.players)[0]
+
         return players_alive[0]
         
             
@@ -183,11 +186,33 @@ class Application(QWidget):
             targeted_player = self.players[targeted_player_index]
             self.player_buttons[targeted_player_index].take_damage_if_ready(True, enemy_dmg)
             print("Enemy {} attacked for {} points of damage to {} ".format(self.current_player.name, enemy_dmg, targeted_player.name))
+
+            self.check_game_over()
             
             
+    def check_game_over(self):
+        players = [p.is_dead() for p in self.players]
+        enemies = [e.is_dead() for e in self.enemies]
+
+        if (all(players)):
+            print("Enemies won!")
+            """hLayout = QHBoxLayout()
+            hLayout.addWidget(QLabel("Enemies won!"))
+            exit_button = QPushButton("Exit")
+
+            hLayout.addWidget(exit_button)
+            self.setLayout(hLayout)
+            self.show()"""
+
+            buttonReply = QMessageBox.question(self, 'PyQt5 message', "Enemies won!", QMessageBox.Yes, QMessageBox.Yes)
+            if buttonReply == QMessageBox.Yes:
+                exit(1)
+
+            self.show()
+        print(all(enemies))
 
 
-
+        
 if __name__ == "__main__":
 
     
@@ -224,9 +249,9 @@ if __name__ == "__main__":
                     {"item": elixir, "quantity": 5}, {"item": megaelixir, "quantity": 5}, {"item": grenade, "quantity": 5}]
 
     # Instantiate people
-    player1 = Person("Valos", 1000, 65, 180, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
+    player1 = Person("Valos", 100, 65, 180, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
     player2 = Person("Lyss", 10, 65, 200, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
-    player3 = Person("Kay", 3089, 65, 300, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
+    player3 = Person("Kay", 10, 65, 300, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
     players = [player1, player2, player3]
 
     enemy2 = Person("Culo", 1200, 65, 80, 100, PLAYER_SPELLS, PLAYER_ITEMS, True)
