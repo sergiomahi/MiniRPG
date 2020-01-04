@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui     import *
 from PyQt5.QtCore    import *
 
+
 class EnemyButton():
     def __init__(self, p):
         self.button = QPushButton(p.name) 
@@ -27,8 +28,8 @@ class EnemyButton():
             self.hp_label.setText(self.enemy.get_hp_bar())
             return True
         return False
-        #self.button.setMenu(menu)
     
+
 
 class PlayerButton():
     def __init__(self, p):
@@ -51,6 +52,7 @@ class PlayerButton():
         return False
 
 
+
 class Application(QWidget):
     def __init__(self, enemies, players):
         super().__init__()
@@ -64,6 +66,7 @@ class Application(QWidget):
         self.player_buttons = []
         self.enemy_buttons = []
         self.createApp(enemies, players)
+
 
     def createApp(self, enemies, players):
         grid = QGridLayout()
@@ -93,20 +96,16 @@ class Application(QWidget):
 
             row += 1
 
-
-
         self.attack_button = QPushButton("Attackt")
         row += 1
         grid.addWidget(self.attack_button, row, 0, 1, 4 )
 
         self.attack_button.clicked.connect(self.is_attack_ready)
 
-
         self.setLayout(grid)
         self.show()
 
     
-
     def is_attack_ready(self):
         if self.attack_ready:
             self.attack_button.setText("Attack")
@@ -115,13 +114,13 @@ class Application(QWidget):
             self.attack_button.setText("Attack ready!")
             self.attack_ready = True
         
+
     def attack(self, button):
         if button.take_damage_if_ready(self.attack_ready, self.current_player.generate_damage()):
             print(self.current_player.name)
 
             num_players_alive = len(self.players_alive(self.players))
             
-
             if self.num_turns < num_players_alive:
                 self.current_player = self.players[self.num_turns] # Take next player
                 self.num_turns += 1
@@ -129,7 +128,6 @@ class Application(QWidget):
                 self.current_player = enemies[0] # First enemy
                 self.num_turns += 1
     
-
             if self.current_player.get_is_enemy():
                 for enemy in self.enemies:
                     if not enemy.is_dead():
@@ -139,7 +137,7 @@ class Application(QWidget):
                 self.current_player = self.players[self.players_alive(self.players)[0]] ## Next player alive
                 self.num_turns = 1
             
-            
+            # Check if the current player is dead in other to select next alive player
             if self.current_player.is_dead():
                 next_alive_player_index = self.next_player_alive()
                 self.current_player = self.players[next_alive_player_index]
@@ -148,8 +146,10 @@ class Application(QWidget):
             self.is_attack_ready()
             self.updateTurnLabel()
 
+
     def updateTurnLabel(self):
         self.turn_of.setText("Turn of {}".format(self.current_player.name))
+
 
     def players_alive(self, players, init=0):
         indexes = []
@@ -161,10 +161,8 @@ class Application(QWidget):
 
     def next_player_alive(self):
         actual_position = self.players.index(self.current_player)
-        print(actual_position)
         next_players = self.players[actual_position:]
         players_alive = self.players_alive(next_players, actual_position)
-        print(players_alive)
 
         if not players_alive:
             return self.players_alive(self.players)[0]
@@ -175,7 +173,6 @@ class Application(QWidget):
         
     
     def enemyAttack(self):
-        num_players = len(self.players)
         players_alive = self.players_alive(self.players)
         enemy_choice = random.randrange(0,1) # It can choose either option 0 attack or 1 magic. 
 
@@ -196,14 +193,7 @@ class Application(QWidget):
 
         if (all(players)):
             print("Enemies won!")
-            """hLayout = QHBoxLayout()
-            hLayout.addWidget(QLabel("Enemies won!"))
-            exit_button = QPushButton("Exit")
-
-            hLayout.addWidget(exit_button)
-            self.setLayout(hLayout)
-            self.show()"""
-
+            
             buttonReply = QMessageBox.question(self, 'PyQt5 message', "Enemies won!", QMessageBox.Yes, QMessageBox.Yes)
             if buttonReply == QMessageBox.Yes:
                 exit(1)
@@ -214,9 +204,6 @@ class Application(QWidget):
 
         
 if __name__ == "__main__":
-
-    
-
     # Create Black Magic
 
     DMG_SPELL_NAME = "black"
@@ -269,153 +256,3 @@ if __name__ == "__main__":
     window = Application(enemies, players)
 
     sys.exit(app.exec_())
-
-
-    running = True
-    i = 0
-
-    print(bcolors.FAIL + bcolors.BOLD + "AN ENEMY ATTACKS!" + bcolors.ENDC)
-
-    def print_hp(p, name, color):
-        print("{} HP: {} {}/{} {}".format(name, color, p.get_hp(), p.get_max_hp(), bcolors.ENDC))
-        
-    def print_mp(p, name, color):
-        print("{} MP: {} {}/{} {}".format(name, color, p.get_mp(), p.get_max_mp(), bcolors.ENDC))
-        
-
-    while (running):
-        print("=========================================")
-        print("\n\n")
-        print("NAME                 HP                                       MP")
-
-        for player in players:
-            player.get_stats()
-        
-        print("\n{}ENEMIES{}\n".format(bcolors.FAIL, bcolors.ENDC))
-        print("NAME                 HP                                       MP")
-        for enemy in enemies:
-            enemy.get_enemy_stats()
-
-        for player in players:
-            if player.get_hp() == 0:
-                continue
-
-            print("\n\n{}Turn of {}{}{}{}".format(bcolors.BOLD, bcolors.OKBLUE, bcolors.UNDERLINE, player.name, bcolors.ENDC))
-            player.choose_action()
-            choice = input("Choose action: ")
-
-            real_choice = int(choice) - 1
-
-            if real_choice == 0:
-                dmg = player.generate_damage()
-                enemy = player.choose_target(enemies)
-                enemy.take_damage(dmg)
-                print("You attacked {} for {} points of damage.".format(enemy.name, dmg))
-                if enemy.get_hp() == 0:  ## Add this as a function.
-                    enemies.remove(enemy)
-                    print("Enemy {} defeated!".format(enemy.name))
-
-
-            elif real_choice == 1:
-                player.choose_magic()
-                magic_choice = int(input("Choose magic:")) - 1
-
-                if magic_choice == -1:
-                    continue
-
-
-                spell = player.magic[magic_choice]
-                magic_dmg = spell.generate_damage()
-
-                if spell.cost > player.get_mp():
-                    print(bcolors.FAIL + 'Not enough MP!' + bcolors.ENDC)
-                    continue
-
-                player.reduce_mp(spell.cost)
-
-                if spell.type == HEAL_SPELL_NAME:
-                    allied = player.choose_target(players)
-                    allied.heal(magic_dmg)
-                    print("{}{} heals for {} {}".format(bcolors.OKBLUE, spell.name, magic_dmg, bcolors.ENDC))
-                elif spell.type == DMG_SPELL_NAME:            
-                    enemy = player.choose_target(enemies)
-                    enemy.take_damage(magic_dmg)
-                    print("{}{} {} hits {} points of damage to {}.".format(bcolors.OKBLUE, spell.name, bcolors.ENDC, magic_dmg, enemy.name))
-                    if enemy.get_hp() == 0:
-                        enemies.remove(enemy)
-                        print("Enemy {} defeated!".format(enemy.name))
-
-            elif real_choice == 2:
-                player.choose_item()
-                item_choice = int(input("Choose item:")) - 1
-
-                if item_choice == -1:
-                    continue
-
-                item = player.items[item_choice]["item"]
-
-                if player.items[item_choice]["quantity"] == 0:
-                    print('{} \nYou have no more {}!  {}'.format(bcolors.FAIL, item.name, bcolors.ENDC))
-                    continue
-                player.items[item_choice]["quantity"] -= 1
-
-                if item.type == ITEM_TYPES[0]:
-                    player.heal(item.prop)
-                    print('{} \n{} heals for {} {}'.format(bcolors.OKGREEN, item.name, item.prop, bcolors.ENDC))
-                elif item.type == ITEM_TYPES[1]:
-                    player.hp = player.maxhp
-                    player.mp = player.maxmp #### ACCESING HERE?? I WOULD LIKE TO KNOW HOW PRIVATE METHODS WORKS.
-                    print('{} \n{} fully restores hp and mp {}'.format(bcolors.OKGREEN, item.name, bcolors.ENDC))
-                elif item.type == ITEM_TYPES[2]:
-                    enemy = player.choose_target(enemies)
-                    enemy.take_damage(item.prop)
-                    print('{} \n{} deals {} points of damage to {}{}'.format(bcolors.FAIL, item.name, item.prop, enemy.name, bcolors.ENDC))
-                    if enemy.get_hp() == 0:
-                        enemies.remove(enemy)
-                        print("Enemy {} defeated!".format(enemy.name))
-                elif item.type == ITEM_TYPES[3]:
-                    for p in players:
-                        p.hp = p.maxhp
-                        p.mp = p.maxmp
-                
-
-
-        for enemy in enemies:
-            #if enemy_hp_percentage <= LOW_HP:
-            enemy_choice = random.randrange(0,2)
-
-            if enemy_choice == 0:
-                enemy_dmg = enemy.generate_damage()
-
-                targeted_player = players[random.randrange(0,len(players))]
-                targeted_player.take_damage(enemy_dmg)
-                print("Enemy {} attacked for {} points of damage to {} ".format(enemy.name, enemy_dmg, targeted_player.name))
-            elif enemy_choice == 1:
-                spell, magic_dmg = enemy.choose_enemy_spell()
-                print(spell.name, magic_dmg)
-                if spell.type == HEAL_SPELL_NAME:
-                    enemy.heal(magic_dmg)
-                    print("{}{} used {} and heals for {} {}".format(bcolors.OKBLUE, enemy.name, spell.name, magic_dmg, bcolors.ENDC))
-                elif spell.type == DMG_SPELL_NAME:            
-                    targeted_player = players[random.randrange(0,len(players))]
-                    targeted_player.take_damage(magic_dmg)
-                    print("{}{}{} hits {} points of damage to {}.".format(bcolors.OKBLUE, spell.name, bcolors.ENDC, magic_dmg, targeted_player.name))
-                    if targeted_player.get_hp() == 0:
-                        print("Player {} died!".format(enemy.name))
-
-        print("--------------------------------")
-
-        if len(enemies)==0:
-            print( bcolors.OKGREEN + "You win!" + bcolors.ENDC)
-            running = False
-        else:
-            num_deaths = 0
-            for p in players:
-                if p.get_hp() == 0:
-                    num_deaths += 1
-            if num_deaths == len(players):
-                print( bcolors.FAIL + "Your enemy has defeated you!" + bcolors.ENDC)
-                running = False 
-        
-
-        #running = False
