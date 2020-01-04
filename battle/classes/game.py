@@ -121,7 +121,6 @@ class Person:
 
         hp_bar = self.create_dynamic_spaced_bar(self.hp, self.maxhp, 25)
         mp_bar = self.create_dynamic_spaced_bar(self.mp, self.maxmp, 10)
-        culo = len(str(self.maxhp))
 
         print("                       _________________________                __________")
         print("{} {:6}  {:4}/{} {}   |{}{}{}|     {}/{}    |{}{}{}|".format(bcolors.BOLD, self.name, self.hp, self.maxhp, bcolors.ENDC, bcolors.OKGREEN, hp_bar, bcolors.ENDC, self.mp, self.maxmp, bcolors.OKBLUE, mp_bar, bcolors.ENDC))
@@ -153,3 +152,8 @@ class Person:
 
     def get_is_enemy(self):
         return self.is_enemy
+
+    def is_dead(self):
+        if self.hp == 0:
+            return True
+        return False

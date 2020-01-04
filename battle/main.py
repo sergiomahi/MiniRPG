@@ -119,41 +119,67 @@ class Application(QWidget):
         if button.take_damage_if_ready(self.attack_ready, self.current_player.generate_damage()):
             print(self.current_player.name)
 
-
             num_players = len(self.players)
             
+
             if self.num_turns < num_players:
                 self.current_player = self.players[self.num_turns] # Take next player
                 self.num_turns += 1
-            elif self.num_turns == num_players:
+            else:
                 self.current_player = enemies[0] # First enemy
                 self.num_turns += 1
     
 
             if self.current_player.get_is_enemy():
                 for enemy in self.enemies:
-                    self.current_player = enemy
-                    self.enemyAttack()
+                    if not enemy.is_dead():
+                        self.current_player = enemy
+                        self.enemyAttack()
                     
-                self.current_player = self.players[0]
+                self.current_player = self.players[self.players_alive(self.players)[0]] ## Next player alive
                 self.num_turns = 1
             
             
+            if self.current_player.is_dead():
+                next_alive_player_index = self.next_player_alive()
+                self.current_player = self.players[next_alive_player_index]
+                self.num_turns += next_alive_player_index
+
             self.is_attack_ready()
             self.updateTurnLabel()
 
     def updateTurnLabel(self):
         self.turn_of.setText("Turn of {}".format(self.current_player.name))
 
+    def players_alive(self, players, init=0):
+        indexes = []
+        for p in players:
+            if not p.is_dead():
+                indexes.append(init)
+            init+=1
+        return indexes
+
+    def next_player_alive(self):
+        actual_position = self.players.index(self.current_player)
+        print(actual_position)
+        next_players = self.players[actual_position:]
+        players_alive = self.players_alive(next_players, actual_position)
+        print(players_alive)
+
+        return players_alive[0]
+        
+            
+        
     
     def enemyAttack(self):
         num_players = len(self.players)
+        players_alive = self.players_alive(self.players)
         enemy_choice = random.randrange(0,1) # It can choose either option 0 attack or 1 magic. 
 
         if enemy_choice == 0:
             enemy_dmg = self.current_player.generate_damage()
 
-            targeted_player_index = random.randrange(0,num_players)
+            targeted_player_index = random.choice(players_alive)
             targeted_player = self.players[targeted_player_index]
             self.player_buttons[targeted_player_index].take_damage_if_ready(True, enemy_dmg)
             print("Enemy {} attacked for {} points of damage to {} ".format(self.current_player.name, enemy_dmg, targeted_player.name))
@@ -198,8 +224,8 @@ if __name__ == "__main__":
                     {"item": elixir, "quantity": 5}, {"item": megaelixir, "quantity": 5}, {"item": grenade, "quantity": 5}]
 
     # Instantiate people
-    player1 = Person("Valos", 3260, 65, 180, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
-    player2 = Person("Lyss", 4160, 65, 200, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
+    player1 = Person("Valos", 1000, 65, 180, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
+    player2 = Person("Lyss", 10, 65, 200, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
     player3 = Person("Kay", 3089, 65, 300, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
     players = [player1, player2, player3]
 
