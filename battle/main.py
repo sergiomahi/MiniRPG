@@ -61,6 +61,8 @@ class Application(QWidget):
         self.setWindowTitle("RPG")
         self.enemies = enemies
         self.players = players
+        self.player_buttons = []
+        self.enemy_buttons = []
         self.createApp(enemies, players)
 
     def createApp(self, enemies, players):
@@ -71,23 +73,24 @@ class Application(QWidget):
         
         row = 2
         col = 0
-        enemy_buttons = []
         for button in enemies:
             b_object = EnemyButton(button)
             b_object.button.clicked.connect(lambda state, x=b_object: self.attack(x))        
 
             grid.addLayout(b_object.vbox, row, col, 1, 1)
 
-            enemy_buttons.append(b_object)
+            self.enemy_buttons.append(b_object)
             row += 1
 
         row = 2
-        col = 3
+        col = 3        
         for button in players:
             b_object = PlayerButton(button)
             b_object.button.clicked.connect(lambda state, x=b_object: self.attack(x))        
 
             grid.addLayout(b_object.vbox, row, col, 1, 1)
+            self.player_buttons.append(b_object)
+
             row += 1
 
 
@@ -118,23 +121,46 @@ class Application(QWidget):
 
 
             num_players = len(self.players)
-            num_enemies = len(self.enemies)
+            
             if self.num_turns < num_players:
-                self.current_player = self.players[self.num_turns]
+                self.current_player = self.players[self.num_turns] # Take next player
                 self.num_turns += 1
-            elif self.num_turns < num_players + num_enemies:
-                self.current_player = self.enemies[self.num_turns - num_enemies]
+            elif self.num_turns == num_players:
+                self.current_player = enemies[0] # First enemy
                 self.num_turns += 1
-            else:
+    
+
+            if self.current_player.get_is_enemy():
+                for enemy in self.enemies:
+                    self.current_player = enemy
+                    self.enemyAttack()
+                    
                 self.current_player = self.players[0]
                 self.num_turns = 1
             
+            
             self.is_attack_ready()
-
             self.updateTurnLabel()
 
     def updateTurnLabel(self):
         self.turn_of.setText("Turn of {}".format(self.current_player.name))
+
+    
+    def enemyAttack(self):
+        num_players = len(self.players)
+        enemy_choice = random.randrange(0,1) # It can choose either option 0 attack or 1 magic. 
+
+        if enemy_choice == 0:
+            enemy_dmg = self.current_player.generate_damage()
+
+            targeted_player_index = random.randrange(0,num_players)
+            targeted_player = self.players[targeted_player_index]
+            self.player_buttons[targeted_player_index].take_damage_if_ready(True, enemy_dmg)
+            print("Enemy {} attacked for {} points of damage to {} ".format(self.current_player.name, enemy_dmg, targeted_player.name))
+            
+            
+
+
 
 if __name__ == "__main__":
 
@@ -172,14 +198,14 @@ if __name__ == "__main__":
                     {"item": elixir, "quantity": 5}, {"item": megaelixir, "quantity": 5}, {"item": grenade, "quantity": 5}]
 
     # Instantiate people
-    player1 = Person("Valos", 3260, 65, 180, 34, PLAYER_SPELLS, PLAYER_ITEMS)
-    player2 = Person("Lyss", 4160, 65, 200, 34, PLAYER_SPELLS, PLAYER_ITEMS)
-    player3 = Person("Kay", 3089, 65, 300, 34, PLAYER_SPELLS, PLAYER_ITEMS)
+    player1 = Person("Valos", 3260, 65, 180, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
+    player2 = Person("Lyss", 4160, 65, 200, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
+    player3 = Person("Kay", 3089, 65, 300, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
     players = [player1, player2, player3]
 
-    enemy2 = Person("Culo", 1200, 65, 80, 100, PLAYER_SPELLS, PLAYER_ITEMS)
-    enemy1 = Person("Javio", 12000, 65, 350, 25, PLAYER_SPELLS, PLAYER_ITEMS)
-    enemy3 = Person("Culo", 1200, 65, 80, 100, PLAYER_SPELLS, PLAYER_ITEMS)
+    enemy2 = Person("Culo", 1200, 65, 80, 100, PLAYER_SPELLS, PLAYER_ITEMS, True)
+    enemy1 = Person("Javio", 12000, 65, 350, 25, PLAYER_SPELLS, PLAYER_ITEMS, True)
+    enemy3 = Person("Culo", 1200, 65, 80, 100, PLAYER_SPELLS, PLAYER_ITEMS, True)
     enemies = [enemy2, enemy1, enemy3]
 
     ######################

@@ -13,7 +13,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 class Person:
-    def __init__(self, name, hp, mp, atk, df, magic, items):
+    def __init__(self, name, hp, mp, atk, df, magic, items, is_enemy):
         self.name = name
         self.maxhp = hp
         self.hp = hp
@@ -25,6 +25,7 @@ class Person:
         self.magic = magic
         self.actions = ["Attack", "Magic", "Items"]
         self.items = items
+        self.is_enemy = is_enemy
     
     
     def generate_damage(self):
@@ -150,3 +151,5 @@ class Person:
         
         return spell, enemy_dmg
 
+    def get_is_enemy(self):
+        return self.is_enemy
