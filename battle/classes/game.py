@@ -157,3 +157,8 @@ class Person:
         if self.hp == 0:
             return True
         return False
+
+    def check_mp(self, spell):
+        if self.mp >= spell.cost:
+            return True
+        return False

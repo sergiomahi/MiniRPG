@@ -29,6 +29,12 @@ class EnemyButton():
             return True
         return False
     
+    def take_magic_damage(self, spell):
+        if spell:
+            self.enemy.take_damage(spell.dmg)
+            self.hp_label.setText(self.enemy.get_hp_bar())
+            return True
+        return False
 
 
 class PlayerButton():
@@ -52,6 +58,22 @@ class PlayerButton():
         return False
 
 
+    def generate_magic_attack(self, spell):
+        if spell:
+            if (self.player.check_mp(spell)):
+                self.player.reduce_mp(spell.cost)
+                self.mp_label.setText(self.player.get_mp_bar())
+                return True
+            else:
+                box = QMessageBox()
+                box.setText("Not enough mana")
+                box.setStandardButtons(QMessageBox.Yes)
+                box.exec_()
+        return False
+
+
+
+
 
 class Application(QWidget):
     def __init__(self, enemies, players):
@@ -59,6 +81,7 @@ class Application(QWidget):
         self.current_player = players[0]
         self.num_turns = 1
         self.attack_ready = False
+        self.current_spell = False
 
         self.setWindowTitle("RPG")
         self.enemies = enemies
@@ -72,7 +95,6 @@ class Application(QWidget):
         grid = QGridLayout()
         self.turn_of = QLabel("Turn of {}".format(self.current_player.name))
         grid.addWidget(self.turn_of, 0, 0, 1, 3)
-        
         
         row = 2
         col = 0
@@ -96,16 +118,42 @@ class Application(QWidget):
 
             row += 1
 
+        self.current_player_button = self.player_buttons[0]  # We take the first player as the current player button
         self.attack_button = QPushButton("Attackt")
         row += 1
         grid.addWidget(self.attack_button, row, 0, 1, 4 )
+
+
+        self.magic_button = QPushButton("Magic")
+        magic_menu = QMenu()
+        for spell in self.current_player.magic:
+            spell_action = magic_menu.addAction(spell.name)
+            spell_action.triggered.connect(lambda state, x=spell: self.set_spell(x))
+
+        self.magic_button.setMenu(magic_menu)
+        row += 1
+        grid.addWidget(self.magic_button, row, 0, 1, 4 )
 
         self.attack_button.clicked.connect(self.is_attack_ready)
 
         self.setLayout(grid)
         self.show()
 
-    
+
+    def set_spell(self, spell):
+        if self.current_spell and not spell: # If there was a magic selected and now there isnt
+            print("Spell deselected")
+
+        self.current_spell = spell
+        if self.current_spell:
+            print("Selected spell: {}".format(self.current_spell.name))
+
+            # We need to deactivate the basic attack if we select an spell.
+            if self.attack_ready:   
+                self.attack_button.setText("Attack")
+                self.attack_ready = False
+
+
     def is_attack_ready(self):
         if self.attack_ready:
             self.attack_button.setText("Attack")
@@ -113,38 +161,53 @@ class Application(QWidget):
         else:
             self.attack_button.setText("Attack ready!")
             self.attack_ready = True
+
+        self.set_spell(False) # Everytime we click on attack the magic is reseted
         
+
+    def manageTurns(self, button):
+        print(self.current_player.name)
+
+        num_players_alive = len(self.players_alive(self.players))
+        
+        if self.num_turns < num_players_alive:
+            self.set_current_player(self.num_turns) # Take next player
+            self.num_turns += 1
+        else:
+            self.set_current_player_enemy(0) # First enemy
+            self.num_turns += 1
+
+        if self.current_player.get_is_enemy():
+            enemy_number = 0
+            for enemy in self.enemies:
+                if not enemy.is_dead():
+                    self.set_current_player_enemy(enemy_number)
+                    self.enemyAttack()
+                enemy_number += 1
+                
+            self.set_current_player(self.players_alive(self.players)[0]) ## Next player alive
+            self.num_turns = 1
+        
+        # Check if the current player is dead in other to select next alive player
+        if self.current_player.is_dead():
+            next_alive_player_index = self.next_player_alive()
+            self.set_current_player(next_alive_player_index)
+            self.num_turns += next_alive_player_index
+
+        self.check_game_over()
+
+        self.updateTurnLabel()
+
 
     def attack(self, button):
         if button.take_damage_if_ready(self.attack_ready, self.current_player.generate_damage()):
-            print(self.current_player.name)
-
-            num_players_alive = len(self.players_alive(self.players))
-            
-            if self.num_turns < num_players_alive:
-                self.current_player = self.players[self.num_turns] # Take next player
-                self.num_turns += 1
-            else:
-                self.current_player = enemies[0] # First enemy
-                self.num_turns += 1
-    
-            if self.current_player.get_is_enemy():
-                for enemy in self.enemies:
-                    if not enemy.is_dead():
-                        self.current_player = enemy
-                        self.enemyAttack()
-                    
-                self.current_player = self.players[self.players_alive(self.players)[0]] ## Next player alive
-                self.num_turns = 1
-            
-            # Check if the current player is dead in other to select next alive player
-            if self.current_player.is_dead():
-                next_alive_player_index = self.next_player_alive()
-                self.current_player = self.players[next_alive_player_index]
-                self.num_turns += next_alive_player_index
-
+            self.manageTurns(button)
             self.is_attack_ready()
-            self.updateTurnLabel()
+
+
+        if self.current_player_button.generate_magic_attack(self.current_spell): # Reduce the mp of the user
+            button.take_magic_damage(self.current_spell)
+            self.manageTurns(button)
 
 
     def updateTurnLabel(self):
@@ -159,6 +222,17 @@ class Application(QWidget):
             init+=1
         return indexes
 
+
+    def set_current_player(self, index):
+        self.current_player = self.players[index]
+        self.current_player_button = self.player_buttons[index]
+
+
+    def set_current_player_enemy(self, index):
+        self.current_player = self.enemies[index]
+        self.current_player_button = self.enemies[index]
+
+
     def next_player_alive(self):
         actual_position = self.players.index(self.current_player)
         next_players = self.players[actual_position:]
@@ -168,9 +242,7 @@ class Application(QWidget):
             return self.players_alive(self.players)[0]
 
         return players_alive[0]
-        
-            
-        
+         
     
     def enemyAttack(self):
         players_alive = self.players_alive(self.players)
@@ -185,21 +257,26 @@ class Application(QWidget):
             print("Enemy {} attacked for {} points of damage to {} ".format(self.current_player.name, enemy_dmg, targeted_player.name))
 
             self.check_game_over()
+
+    
+    def check_all_deads(self, players, name):
+        message = "{} won!".format(name)
+
+        if (all(players)):
+            print(message)
             
+            buttonReply = QMessageBox.question(self, 'PyQt5 message', message, QMessageBox.Yes, QMessageBox.Yes)
+            if buttonReply == QMessageBox.Yes:
+                exit(1)
             
     def check_game_over(self):
         players = [p.is_dead() for p in self.players]
         enemies = [e.is_dead() for e in self.enemies]
 
-        if (all(players)):
-            print("Enemies won!")
-            
-            buttonReply = QMessageBox.question(self, 'PyQt5 message', "Enemies won!", QMessageBox.Yes, QMessageBox.Yes)
-            if buttonReply == QMessageBox.Yes:
-                exit(1)
+        self.check_all_deads(players, "Enemies")    # If all players die enemies won
+        self.check_all_deads(enemies, "Players")    # If all enemies die players won
+    
 
-            self.show()
-        print(all(enemies))
 
 
         
@@ -236,14 +313,14 @@ if __name__ == "__main__":
                     {"item": elixir, "quantity": 5}, {"item": megaelixir, "quantity": 5}, {"item": grenade, "quantity": 5}]
 
     # Instantiate people
-    player1 = Person("Valos", 100, 65, 180, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
-    player2 = Person("Lyss", 10, 65, 200, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
-    player3 = Person("Kay", 10, 65, 300, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
+    player1 = Person("Valos", 400, 65, 180, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
+    player2 = Person("Lyss", 300, 65, 200, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
+    player3 = Person("Kay", 350, 65, 300, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
     players = [player1, player2, player3]
 
-    enemy2 = Person("Culo", 1200, 65, 80, 100, PLAYER_SPELLS, PLAYER_ITEMS, True)
-    enemy1 = Person("Javio", 12000, 65, 350, 25, PLAYER_SPELLS, PLAYER_ITEMS, True)
-    enemy3 = Person("Culo", 1200, 65, 80, 100, PLAYER_SPELLS, PLAYER_ITEMS, True)
+    enemy2 = Person("Culo", 300, 65, 80, 100, PLAYER_SPELLS, PLAYER_ITEMS, True)
+    enemy1 = Person("Javio", 1200, 65, 350, 25, PLAYER_SPELLS, PLAYER_ITEMS, True)
+    enemy3 = Person("Culo", 300, 65, 80, 100, PLAYER_SPELLS, PLAYER_ITEMS, True)
     enemies = [enemy2, enemy1, enemy3]
 
     ######################
