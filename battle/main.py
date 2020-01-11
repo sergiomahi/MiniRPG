@@ -166,7 +166,6 @@ class Application(QWidget):
         
 
     def manageTurns(self, button):
-        print(self.current_player.name)
 
         num_players_alive = len(self.players_alive(self.players))
         
@@ -313,14 +312,14 @@ if __name__ == "__main__":
                     {"item": elixir, "quantity": 5}, {"item": megaelixir, "quantity": 5}, {"item": grenade, "quantity": 5}]
 
     # Instantiate people
-    player1 = Person("Valos", 400, 65, 180, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
-    player2 = Person("Lyss", 300, 65, 200, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
-    player3 = Person("Kay", 350, 65, 300, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
+    player1 = Person("Sergiyo", 400, 65, 180, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
+    player2 = Person("Vandel", 300, 65, 200, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
+    player3 = Person("Gudi", 350, 65, 300, 34, PLAYER_SPELLS, PLAYER_ITEMS, False)
     players = [player1, player2, player3]
 
-    enemy2 = Person("Culo", 300, 65, 80, 100, PLAYER_SPELLS, PLAYER_ITEMS, True)
+    enemy2 = Person("dog", 300, 65, 80, 100, PLAYER_SPELLS, PLAYER_ITEMS, True)
     enemy1 = Person("Javio", 1200, 65, 350, 25, PLAYER_SPELLS, PLAYER_ITEMS, True)
-    enemy3 = Person("Culo", 300, 65, 80, 100, PLAYER_SPELLS, PLAYER_ITEMS, True)
+    enemy3 = Person("dog", 300, 65, 80, 100, PLAYER_SPELLS, PLAYER_ITEMS, True)
     enemies = [enemy2, enemy1, enemy3]
 
     ######################
