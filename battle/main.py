@@ -71,7 +71,12 @@ class PlayerButton():
                 box.exec_()
         return False
 
-
+    def heal(self, spell):
+        if spell:
+            self.player.heal(spell.dmg)
+            self.hp_label.setText(self.player.get_hp_bar())
+            return True
+        return False
 
 
 
@@ -205,7 +210,11 @@ class Application(QWidget):
 
 
         if self.current_player_button.generate_magic_attack(self.current_spell): # Reduce the mp of the user
-            button.take_magic_damage(self.current_spell)
+            if self.current_spell.type == DMG_SPELL_NAME:
+                button.take_magic_damage(self.current_spell)
+            elif self.current_spell.type == HEAL_SPELL_NAME:
+                button.heal(self.current_spell)
+                
             self.manageTurns(button)
 
 
